@@ -1,17 +1,23 @@
-<?php
+<?php namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-
+use Input;
+use Redirect;
 use App\Project;
 use App\Task;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
-class TasksController extends Controller
-{
-    /**
+use Illuminate\Http\Request;
+
+class TasksController extends Controller {
+    
+    protected $rules = [
+        'name' => ['required', 'min:3'],
+        'slug' => ['required'],
+        'description' => ['required'],
+    ];
+
+	/**
 	 * Display a listing of the resource.
 	 *
 	 * @param  \App\Project $project
@@ -21,7 +27,7 @@ class TasksController extends Controller
 	{
 		return view('tasks.index', compact('project'));
 	}
- 
+
 	/**
 	 * Show the form for creating a new resource.
 	 *
@@ -32,18 +38,24 @@ class TasksController extends Controller
 	{
 		return view('tasks.create', compact('project'));
 	}
- 
+
 	/**
 	 * Store a newly created resource in storage.
-	 *
+	 *  @param \Illuminate\Http\Request $request
 	 * @param  \App\Project $project
 	 * @return Response
 	 */
-	public function store(Project $project)
+	public function store(Project $project, Request $request)
 	{
-		//
+        $this->validate($request, $this->rules);
+        
+		$input = Input::all();
+		$input['project_id'] = $project->id;
+		Task::create( $input );
+
+		return Redirect::route('projects.show', $project->slug)->with('Task created.');
 	}
- 
+
 	/**
 	 * Display the specified resource.
 	 *
@@ -55,7 +67,7 @@ class TasksController extends Controller
 	{
 		return view('tasks.show', compact('project', 'task'));
 	}
- 
+
 	/**
 	 * Show the form for editing the specified resource.
 	 *
@@ -67,19 +79,24 @@ class TasksController extends Controller
 	{
 		return view('tasks.edit', compact('project', 'task'));
 	}
- 
+
 	/**
 	 * Update the specified resource in storage.
-	 *
+	 * @param \Illuminate\Http\Request $request
 	 * @param  \App\Project $project
 	 * @param  \App\Task    $task
 	 * @return Response
 	 */
-	public function update(Project $project, Task $task)
+	public function update(Project $project, Task $task, Request $request)
 	{
-		//
+        $this->validate($request, $this->rules);
+        
+		$input = array_except(Input::all(), '_method');
+		$task->update($input);
+
+		return Redirect::route('projects.tasks.show', [$project->slug, $task->slug])->with('message', 'Task updated.');
 	}
- 
+
 	/**
 	 * Remove the specified resource from storage.
 	 *
@@ -89,7 +106,9 @@ class TasksController extends Controller
 	 */
 	public function destroy(Project $project, Task $task)
 	{
-		//
+		$task->delete();
+
+		return Redirect::route('projects.show', $project->slug)->with('message', 'Task deleted.');
 	}
- 
+
 }

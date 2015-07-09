@@ -1,16 +1,21 @@
-<?php
+<?php namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-
+use Input;
+use Redirect;
 use App\Project;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
-class ProjectsController extends Controller
-{
-    /**
+use Illuminate\Http\Request;
+
+class ProjectsController extends Controller {
+    
+    protected $rules = [
+        'name' => ['required', 'min:3'],
+        'slug' => ['required'],
+    ];
+
+	/**
 	 * Display a listing of the resource.
 	 *
 	 * @return Response
@@ -20,7 +25,7 @@ class ProjectsController extends Controller
 		$projects = Project::all();
 		return view('projects.index', compact('projects'));
 	}
- 
+
 	/**
 	 * Show the form for creating a new resource.
 	 *
@@ -30,17 +35,22 @@ class ProjectsController extends Controller
 	{
 		return view('projects.create');
 	}
- 
+
 	/**
 	 * Store a newly created resource in storage.
-	 *
+	 * @param \Illuminate\Http\Request $request
 	 * @return Response
 	 */
-	public function store()
+	public function store(Project $project, Request $request)
 	{
-		//
+        $this->validate($request, $this->rules);
+        
+		$input = Input::all();
+		Project::create( $input );
+
+		return Redirect::route('projects.index')->with('message', 'Project created');
 	}
- 
+
 	/**
 	 * Display the specified resource.
 	 *
@@ -51,7 +61,7 @@ class ProjectsController extends Controller
 	{
 		return view('projects.show', compact('project'));
 	}
- 
+
 	/**
 	 * Show the form for editing the specified resource.
 	 *
@@ -62,18 +72,23 @@ class ProjectsController extends Controller
 	{
 		return view('projects.edit', compact('project'));
 	}
- 
+
 	/**
 	 * Update the specified resource in storage.
-	 *
+	 * @param \Illuminate\Http\Request $request
 	 * @param  \App\Project $project
 	 * @return Response
 	 */
-	public function update(Project $project)
+	public function update(Project $project, Request $request)
 	{
-		//
+        $this->validate($request, $this->rules);
+        
+		$input = array_except(Input::all(), '_method');
+		$project->update($input);
+
+		return Redirect::route('projects.show', $project->slug)->with('message', 'Project updated.');
 	}
- 
+
 	/**
 	 * Remove the specified resource from storage.
 	 *
@@ -82,7 +97,9 @@ class ProjectsController extends Controller
 	 */
 	public function destroy(Project $project)
 	{
-		//
+		$project->delete();
+
+		return Redirect::route('projects.index')->with('message', 'Project deleted.');
 	}
- 
+
 }
